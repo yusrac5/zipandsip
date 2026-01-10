@@ -7,7 +7,7 @@ import MapView, { Marker } from 'react-native-maps';
 
 const Tab = createBottomTabNavigator();
 
-// Mock matcha spots - you'll replace this with real data later
+// Mock matcha spots - you'll replace this with real data later!
 const MOCK_SPOTS = [
   { id: 1, name: "Cha Cha Matcha", lat: 40.7589, lng: -73.9851, points: 15 },
   { id: 2, name: "Matchaful", lat: 40.7614, lng: -73.9776, points: 20 },
