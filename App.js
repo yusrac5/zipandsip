@@ -6,7 +6,6 @@ import Constants from 'expo-constants';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 
-// Import constants
 import { 
   CURRENT_USER, 
   MATCHA_SPOTS,
@@ -14,11 +13,10 @@ import {
   MATCHA_IMAGES,
   FALLBACK_MOMENTS,
   USERS,
-  FRIENDS_LEADERBOARD,  // ✅ ADD THIS
-  GLOBAL_LEADERBOARD    // ✅ ADD THIS
+  FRIENDS_LEADERBOARD,  
+  GLOBAL_LEADERBOARD    
 } from './constants';
 
-// Import services
 import { getUserProfile, getMatchaMoments } from './services/mongoService';
 import { mintTopPerformerNFT } from './services/solanaService';
 import { getLiveCultureMoments } from './services/cultureWorker';
@@ -29,8 +27,17 @@ import { generateVoiceRecap } from './services/elevenLabs';
 const Tab = createBottomTabNavigator();
 const { width } = Dimensions.get('window');
 
+const getBackendUrl = () => {
+  const manifest = Constants.expoConfig || Constants.manifest;
+  if (manifest?.hostUri) {
+    const host = manifest.hostUri.split(':').shift();
+    return `http://${host}:5000`;
+  }
+  return 'http://localhost:5000';
+};
 
-// FEED SCREEN
+const BACKEND_URL = getBackendUrl();
+
 function FeedScreen() {
   const [moments, setMoments] = useState([]);
 
@@ -85,9 +92,8 @@ function FeedScreen() {
       </ScrollView>
     </View>
   );
-};
+}
 
-// LOG SCREEN
 const LogScreen = () => {
   const [cafe, setCafe] = useState(null);
   const [drink, setDrink] = useState(null);
@@ -113,8 +119,11 @@ const LogScreen = () => {
       CURRENT_USER.totalPoints += cafe.basePoints;
       CURRENT_USER.matchaCount += 1;
       setTimeout(() => { setSuccess(false); setCafe(null); setDrink(null); }, 2500);
-    } catch { Alert.alert('Error', 'Failed to log'); }
-    finally { setLoading(false); }
+    } catch { 
+      Alert.alert('Error', 'Failed to log'); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   if (success) {
@@ -180,9 +189,8 @@ const LogScreen = () => {
   );
 };
 
-// LEADERBOARD SCREEN
 const LeaderboardScreen = () => {
-  const [activeTab, setActiveTab] = useState('friends'); // 'friends' or 'global'
+  const [activeTab, setActiveTab] = useState('friends');
 
   const getRankBadge = (rank) => {
     if (rank === 1) return '🥇';
@@ -200,7 +208,6 @@ const LeaderboardScreen = () => {
         <Text style={styles.headerSubtitle}>Top matcha sippers</Text>
       </View>
 
-      {/* Tab Switcher */}
       <View style={styles.tabContainer}>
         <TouchableOpacity 
           style={[styles.tab, activeTab === 'friends' && styles.tabActive]} 
@@ -255,15 +262,52 @@ const LeaderboardScreen = () => {
   );
 };
 
-// MAP SCREEN
 const MapScreen = () => {
   const [selected, setSelected] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === 'granted') {
+          const location = await Location.getCurrentPositionAsync({});
+          setUserLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+        }
+      } catch (err) {
+        console.log('Location error:', err);
+      }
+    })();
+  }, []);
+
+  const handleGetDirections = (spot) => {
+    const url = Platform.OS === 'ios'
+      ? `maps:0,0?q=${spot.name}@${spot.lat},${spot.lng}`
+      : `geo:0,0?q=${spot.lat},${spot.lng}(${spot.name})`;
+    Linking.openURL(url);
+  };
   
   return (
     <View style={styles.container}>
-      <MapView style={{ flex: 1 }} initialRegion={{ latitude: 42.9849, longitude: -81.2497, latitudeDelta: 0.02, longitudeDelta: 0.02 }}>
+      <MapView 
+        style={{ flex: 1 }} 
+        initialRegion={{ 
+          latitude: 42.9849, 
+          longitude: -81.2497, 
+          latitudeDelta: 0.02, 
+          longitudeDelta: 0.02 
+        }}
+        showsUserLocation={!!userLocation}
+      >
         {MATCHA_SPOTS.map(s => (
-          <Marker key={s.id} coordinate={{ latitude: s.lat, longitude: s.lng }} onPress={() => setSelected(s)}>
+          <Marker 
+            key={s.id} 
+            coordinate={{ latitude: s.lat, longitude: s.lng }} 
+            onPress={() => setSelected(s)}
+          >
             <View style={styles.pin}><Text style={{ fontSize: 20 }}>🍵</Text></View>
           </Marker>
         ))}
@@ -277,7 +321,7 @@ const MapScreen = () => {
             <Text style={styles.mapCardStat}>👥 {selected.activeNow} active now</Text>
             <Text style={styles.mapCardStat}>📊 {selected.todayLogs} logged today</Text>
           </View>
-          <TouchableOpacity style={styles.button} onPress={() => Linking.openURL(`geo:${selected.lat},${selected.lng}`)}>
+          <TouchableOpacity style={styles.button} onPress={() => handleGetDirections(selected)}>
             <Text style={styles.buttonText}>Get Directions</Text>
           </TouchableOpacity>
         </View>
@@ -286,8 +330,7 @@ const MapScreen = () => {
   );
 };
 
-// PROFILE SCREEN WITH FINANCIAL INSIGHTS
-const ProfileScreen = () => {
+const ProfileScreen = ({ onLogout }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
@@ -298,7 +341,6 @@ const ProfileScreen = () => {
         <Text style={styles.profileEmail}>{CURRENT_USER.email}</Text>
       </View>
       
-      {/* Stats Row */}
       <View style={styles.statsContainer}>
         {[
           { label: 'Points', value: CURRENT_USER.totalPoints },
@@ -313,7 +355,6 @@ const ProfileScreen = () => {
         ))}
       </View>
 
-      {/* FINANCIAL INSIGHTS */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>💰 Matcha Spending Insights</Text>
         
@@ -370,7 +411,6 @@ const ProfileScreen = () => {
         </View>
       </View>
 
-      {/* Settings */}
       <View style={styles.section}>
         <TouchableOpacity style={styles.settingItem}>
           <Text style={styles.settingText}>Edit Profile</Text>
@@ -384,7 +424,7 @@ const ProfileScreen = () => {
           <Text style={styles.settingText}>Privacy</Text>
           <Text style={styles.settingArrow}>→</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.settingItem}>
+        <TouchableOpacity style={styles.settingItem} onPress={onLogout}>
           <Text style={[styles.settingText, { color: '#ef4444' }]}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -394,11 +434,31 @@ const ProfileScreen = () => {
   );
 };
 
-// MAIN APP
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // LOGIN SCREEN COMPONENT
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel'
+        },
+        {
+          text: 'Logout',
+          style: 'destructive',
+          onPress: () => {
+            setIsLoggedIn(false);
+            CURRENT_USER.username = '';
+            CURRENT_USER.email = '';
+          }
+        }
+      ]
+    );
+  };
+
   const LoginScreen = ({ onLogin }) => {
     const [isSignup, setIsSignup] = useState(false);
     const [email, setEmail] = useState('');
@@ -554,7 +614,9 @@ const App = () => {
         <Tab.Screen name="Log" component={LogScreen} />
         <Tab.Screen name="Leaderboard" component={LeaderboardScreen} />
         <Tab.Screen name="Map" component={MapScreen} />
-        <Tab.Screen name="Profile" component={ProfileScreen} />
+        <Tab.Screen name="Profile">
+          {(props) => <ProfileScreen {...props} onLogout={handleLogout} />}
+        </Tab.Screen>
       </Tab.Navigator>
     </NavigationContainer>
   );
@@ -567,8 +629,6 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   headerTitle: { fontSize: 26, fontWeight: '800', color: '#1a1a1a' },
   headerSubtitle: { fontSize: 13, color: '#999', marginTop: 4 },
-  
-  // Feed
   post: { marginBottom: 2, backgroundColor: '#fff' },
   postHeader: { flexDirection: 'row', justifyContent: 'space-between', padding: 15 },
   postUser: { flexDirection: 'row', alignItems: 'center' },
@@ -584,8 +644,6 @@ const styles = StyleSheet.create({
   pointsText: { fontSize: 13, fontWeight: '700', color: '#6B8E23' },
   pointsBadgeSmall: { backgroundColor: '#F0F8F0', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 6 },
   pointsTextSmall: { fontSize: 11, fontWeight: '700', color: '#6B8E23' },
-  
-  // Log Screen
   section: { padding: 20 },
   sectionTitle: { fontSize: 16, fontWeight: '700', marginBottom: 15, color: '#1a1a1a' },
   option: { padding: 16, borderRadius: 12, borderWidth: 2, borderColor: '#f0f0f0', marginBottom: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
@@ -600,8 +658,6 @@ const styles = StyleSheet.create({
   button: { marginHorizontal: 20, marginBottom: 20, height: 52, borderRadius: 14, backgroundColor: '#6B8E23', justifyContent: 'center', alignItems: 'center' },
   buttonDisabled: { backgroundColor: '#ccc' },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  
-  // Leaderboard
   tabContainer: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#fff', gap: 10 },
   tab: { flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#f5f5f5', alignItems: 'center' },
   tabActive: { backgroundColor: '#6B8E23' },
@@ -620,8 +676,6 @@ const styles = StyleSheet.create({
   leaderboardPoints: { alignItems: 'flex-end' },
   leaderboardPointsNumber: { fontSize: 20, fontWeight: '800', color: '#6B8E23' },
   leaderboardPointsLabel: { fontSize: 11, color: '#666', marginTop: 2 },
-  
-  // Map
   pin: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#fff', borderWidth: 2, borderColor: '#6B8E23', justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.2, shadowRadius: 4, elevation: 3 },
   mapCard: { position: 'absolute', bottom: 20, left: 20, right: 20, backgroundColor: '#fff', borderRadius: 16, padding: 20, shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 10, elevation: 5 },
   close: { position: 'absolute', top: 12, right: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: '#f0f0f0', justifyContent: 'center', alignItems: 'center' },
@@ -629,20 +683,15 @@ const styles = StyleSheet.create({
   mapCardAddress: { fontSize: 13, color: '#666', marginBottom: 15 },
   mapCardStats: { flexDirection: 'row', gap: 15, marginBottom: 15 },
   mapCardStat: { fontSize: 13, color: '#666', fontWeight: '600' },
-  
-  // Profile
   profileHeader: { alignItems: 'center', paddingVertical: 40, backgroundColor: '#F8F9FA' },
   profileAvatar: { width: 85, height: 85, borderRadius: 42, backgroundColor: '#6B8E23', justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
   profileAvatarText: { fontSize: 42 },
   profileUsername: { fontSize: 26, fontWeight: '800', color: '#1a1a1a', marginBottom: 4 },
   profileEmail: { fontSize: 14, color: '#999' },
-  
   statsContainer: { flexDirection: 'row', paddingVertical: 25, paddingHorizontal: 20, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   statBox: { flex: 1, alignItems: 'center' },
   statValue: { fontSize: 24, fontWeight: '800', color: '#6B8E23', marginBottom: 5 },
   statLabel: { fontSize: 12, color: '#666', fontWeight: '600' },
-  
-  // Financial Insights
   insightCard: { backgroundColor: '#f9f9f9', borderRadius: 14, padding: 18, marginBottom: 15, borderWidth: 1, borderColor: '#f0f0f0' },
   insightHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   insightIcon: { fontSize: 24, marginRight: 10 },
@@ -650,18 +699,13 @@ const styles = StyleSheet.create({
   insightAmount: { fontSize: 32, fontWeight: '900', color: '#6B8E23', marginBottom: 6 },
   insightDetail: { fontSize: 13, color: '#666' },
   insightTip: { fontSize: 14, color: '#1a1a1a', lineHeight: 20, marginTop: 8 },
-  
   valueSpotRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#f0f0f0', marginTop: 8 },
   valueSpotRank: { fontSize: 14, fontWeight: '700', color: '#999', width: 30 },
   valueSpotName: { flex: 1, fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
   valueSpotPrice: { fontSize: 14, fontWeight: '700', color: '#6B8E23' },
-  
-  // Settings
   settingItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
   settingText: { fontSize: 16, color: '#1a1a1a', fontWeight: '500' },
   settingArrow: { fontSize: 18, color: '#999' },
-  
-  // Login/Auth Screen
   authContainer: { flex: 1, backgroundColor: '#F0F8F0' },
   authScrollContent: { flexGrow: 1, justifyContent: 'center', padding: 20 },
   authBox: { backgroundColor: '#fff', borderRadius: 24, padding: 30, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 5 },
@@ -673,7 +717,6 @@ const styles = StyleSheet.create({
   authButtonText: { color: '#fff', fontSize: 17, fontWeight: '700' },
   authSwitch: { textAlign: 'center', color: '#6B8E23', fontSize: 14, fontWeight: '600' },
   authFooter: { textAlign: 'center', color: '#999', fontSize: 12, marginTop: 15, fontStyle: 'italic' },
-  
   demoSection: { marginTop: 30, paddingTop: 25, borderTopWidth: 1, borderTopColor: '#f0f0f0' },
   demoTitle: { fontSize: 14, fontWeight: '700', color: '#666', marginBottom: 15, textAlign: 'center' },
   demoAccount: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f9f9f9', borderRadius: 12, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#e0e0e0' },
@@ -682,4 +725,4 @@ const styles = StyleSheet.create({
   demoUsername: { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
   demoEmail: { fontSize: 12, color: '#666', marginTop: 2 },
   demoArrow: { fontSize: 20, color: '#6B8E23' },
-});
+  });
