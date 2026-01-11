@@ -346,7 +346,6 @@ const ProfileScreen = ({ onLogout }) => {
           { label: 'Points', value: CURRENT_USER.totalPoints },
           { label: 'Sips', value: CURRENT_USER.matchaCount },
           { label: 'Streak', value: `${CURRENT_USER.streak}🔥` },
-          { label: 'Level', value: CURRENT_USER.level },
         ].map(s => (
           <View key={s.label} style={styles.statBox}>
             <Text style={styles.statValue}>{s.value}</Text>
