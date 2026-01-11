@@ -48,3 +48,23 @@ export const CURRENT_USER = {
     { username: 'yusrac', email: 'yusra.choudhary5@gmail.com', password: 'zipandsip', avatar: '🍵' },
     { username: 'umaizaali', email: 'umaizaali@gmail.com', password: 'zipandsip', avatar: '💚' },
   ];
+  export const FRIENDS_LEADERBOARD = [
+    { rank: 1, username: 'yusrac', points: 645, matchaCount: 43, streak: 12, avatar: '🍵' },
+    { rank: 2, username: 'umaizaali', points: 520, matchaCount: 38, streak: 8, avatar: '🍵' },
+    { rank: 3, username: 'aliya', points: 410, matchaCount: 31, streak: 15, avatar: '🍵' },
+    { rank: 4, username: 'greenteaqueen', points: 385, matchaCount: 29, streak: 6, avatar: '🍵' },
+    { rank: 5, username: 'matchaenthusiast', points: 340, matchaCount: 26, streak: 9, avatar: '🍵' },
+  ];
+  
+  export const GLOBAL_LEADERBOARD = [
+    { rank: 1, username: 'emilyjane', points: 2845, matchaCount: 312, streak: 89, avatar: '🍵' },
+    { rank: 2, username: 'matchalover', points: 2103, matchaCount: 245, streak: 67, avatar: '🍵' },
+    { rank: 3, username: 'nycmatchalover', points: 1876, matchaCount: 198, streak: 45, avatar: '🍵' },
+    { rank: 4, username: 'josh', points: 1654, matchaCount: 187, streak: 52, avatar: '🍵' },
+    { rank: 5, username: 'hunter', points: 1432, matchaCount: 156, streak: 41, avatar: '🍵' },
+    { rank: 6, username: 'rachel', points: 1298, matchaCount: 145, streak: 38, avatar: '🍵' },
+    { rank: 7, username: 'amna', points: 1145, matchaCount: 134, streak: 29, avatar: '🍵' },
+    { rank: 8, username: 'azra', points: 987, matchaCount: 123, streak: 33, avatar: '🍵' },
+    { rank: 9, username: 'yusrac', points: 645, matchaCount: 43, streak: 12, avatar: '🍵', isYou: true },
+    { rank: 10, username: 'umaizaali', points: 520, matchaCount: 38, streak: 8, avatar: '🍵' },
+  ];
